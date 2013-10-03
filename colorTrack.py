@@ -8,8 +8,8 @@ def getthresholdedimg(hsv):
 
 c = cv2.VideoCapture(0)
 
-tume = [20,100,100]
-hele = [30,255,255]
+tume = [6,175,114]
+hele = [14,255,220]
 
 while(1):
     _,f = c.read()
@@ -38,23 +38,26 @@ while(1):
         x = cv.GetSpatialMoment(moments, 1, 0)/area
         y = cv.GetSpatialMoment(moments, 0, 1)/area
 
-##        print 'x: ' + str(x) + ' y: ' + str(y) + ' area: ' + str(area) 
+        print 'x: ' + str(x) + ' y: ' + str(y) + ' area: ' + str(area) 
 
         #create an overlay to mark the center of the tracked object        
         overlay = cv.CreateImage(cv.GetSize(F), 8, 3)
 
-        cv.Circle(overlay, (x, y), 2, (255, 255, 255), 20)
+        cv.Circle(overlay, (int(x), int(y)), 2, (255, 255, 255), 20)
         cv.Add(F, overlay, F)
         #add the thresholded image back to the img so we can see what was  
         #left after it was applied 
         cv.Merge(tr, None, None, None, F)
+        cv.Merge(tr, None, None, None, overlay)
 
     cv2.rectangle(f ,(0,0), (50,50), tume ,-1)
     cv2.rectangle(f ,(50,0), (100,50), hele ,-1)
     cv2.putText(f,"Skaala", (2,20), cv2.FONT_HERSHEY_SIMPLEX, .5, (0,0,0), 2)
     cv2.imshow('Varviotsing',f)
 
-##    cv2.imshow("thresh", thresh)
+
+    
+    cv2.imshow("thresh", thresh)
     
 
     if cv2.waitKey(25) == 27:
