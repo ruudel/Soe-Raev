@@ -22,6 +22,8 @@ while(1):
     
     thresh = cv2.inRange(hsv,np.array(tume), np.array(hele))
 
+    
+
     #determine the objects moments and check that the area is large  
     #enough to be our object
 
@@ -44,19 +46,13 @@ while(1):
         overlay = cv.CreateImage(cv.GetSize(F), 8, 3)
 
         cv.Circle(overlay, (int(x), int(y)), 2, (255, 255, 255), 20)
+        cv.Circle(tr, (int(x), int(y)), 50, (255, 255, 255), -20)
         cv.Add(F, overlay, F)
         #add the thresholded image back to the img so we can see what was  
         #left after it was applied 
         cv.Merge(tr, None, None, None, F)
-        cv.Merge(tr, None, None, None, overlay)
 
-    cv2.rectangle(f ,(0,0), (50,50), tume ,-1)
-    cv2.rectangle(f ,(50,0), (100,50), hele ,-1)
-    cv2.putText(f,"Skaala", (2,20), cv2.FONT_HERSHEY_SIMPLEX, .5, (0,0,0), 2)
-    cv2.imshow('Varviotsing',f)
-
-
-    
+##    cv2.imshow('Varviotsing',f)
     cv2.imshow("thresh", thresh)
     
 
