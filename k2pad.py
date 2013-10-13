@@ -22,15 +22,7 @@ def soidaedasi(kiirus):
 
 def tagane(kiirus):
     saada(vasak,'sd-'+str(kiirus))
-    saada(parem,'sd'+str(kiirus))
-
-def eih(kiirus):
-    saada(vasak,'sd-'+str(kiirus))
-    saada(parem,'sd'+str(kiirus))
-    sleep(0.5)
-    saada(vasak, 'sd-'+str(kiirus))
-    saada(parem, 'sd'+str(kiirus-kiirus*0.3))
-    
+    saada(parem,'sd'+str(kiirus))    
 
 def ymberpoord():
     saadaseadmetele('sd80\n')
@@ -49,7 +41,36 @@ def loeseadmest(seade, sonum):
     saada(seade,sonum)
     print(seade.readline())
 
+def kasA():
+    parem.write('go\n')
+    v=parem.readline()
+    if v=='<0mine>\n':
+        return True
+    else:
+        return False
+
+def kasB():
+    parem.write('gl\n')
+    v=parem.readline()
+    if v=='<0varav>\n':
+        return True
+    else:
+        return False
+
+def kasPall():
+    parem.write('gb\n')
+    v=parem.readline()
+    if v=='<b:1>\n':
+        return True
+    else:
+        return False
+    
+
 saadaseadmetele('fs0') ## ARA VALJA KOMMENTEERI! lylitab autom peatamise v2lja
+
+while (1):
+    print(kasPall())
+    sleep(0.5)
 
 ##soidaedasi(10)
 ##while True:
@@ -57,15 +78,15 @@ saadaseadmetele('fs0') ## ARA VALJA KOMMENTEERI! lylitab autom peatamise v2lja
 ##    loeseadmest(parem, 's')
 ##    sleep(0.5)
 
-eih(20)
-soidaedasi(20)
-sleep(1)
-tagane(30)
-stop()
-ymberpoord()
-soidavasakule(30)
-sleep(2)
-soidaparemale(30)
-sleep(2)
-ymberpoord()
+##eih(20)
+##soidaedasi(20)
+##sleep(1)
+##tagane(30)
+##stop()
+##ymberpoord()
+##soidavasakule(30)
+##sleep(2)
+##soidaparemale(30)
+##sleep(2)
+##ymberpoord()
 
