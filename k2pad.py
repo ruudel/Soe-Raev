@@ -1,10 +1,35 @@
+# -*- coding: utf-8 -*-
 # fs0 - k2sk mootori automaatse peatamise lopetamsiseks
 # sudo idle-python2.7 k2pad.py 
 
 import serial
 from time import sleep
-vasak = serial.Serial('/dev/ttyACM0')
-parem = serial.Serial('/dev/ttyACM1')
+
+seadmed=[]
+#coil=serial.Serial('/dev/ttyACM0')
+#vasak=serial.Serial('/dev/ttyACM1')
+#parem=serial.Serial('/dev/ttyACM2')
+
+def saaseadmed(): # saab id´d ainult siis kui aku toide on peal!!!!!
+    global parem, vasak, coil
+    for i in range(256):
+        try:
+            s=serial.Serial('/dev/ttyACM'+str(i),timeout=1,parity=serial.PARITY_NONE,baudrate=115200)
+            s.write("?\n")
+            idstr=s.readline()
+            if (idstr=='<id:1>\n'):
+                parem=s
+                seadmed.append(parem)
+            elif (idstr=='<id:2>\n'):
+                vasak=s
+                seadmed.append(vasak)
+            else:
+                coil=s
+                seadmed.append(coil)
+        except serial.SerialException:
+            pass
+    if len(seadmed)==0:
+        print('Seadmeid ei leitud!')
 
 def saada(seade, sonum):
     seade.write(sonum+'\n')
@@ -64,29 +89,24 @@ def kasPall():
         return True
     else:
         return False
-    
 
-saadaseadmetele('fs0') ## ARA VALJA KOMMENTEERI! lylitab autom peatamise v2lja
+def annatuld(tugevus=5000):
+    saada(coil,'k'+str(tugevus))
 
-while (1):
-    print(kasPall())
-    sleep(0.5)
+##################### ARA VALJA KOMMENTEERI! #######################
+saaseadmed()            # sebib oiged seadmed ja avab pordid
+saadaseadmetele('fs0')  # lylitab autom peatamise v2lja
+saada(coil,'fs0')       # lylitab autom kondeka tyhjaks laadimise v2lja
+saada(coil, 'c')        # laeb kondeka
+####################################################################
+
+
+##while (1):
+##    print(kasPall())
+##    sleep(0.5)
 
 ##soidaedasi(10)
 ##while True:
 ##    loeseadmest(vasak, 's')
 ##    loeseadmest(parem, 's')
 ##    sleep(0.5)
-
-##eih(20)
-##soidaedasi(20)
-##sleep(1)
-##tagane(30)
-##stop()
-##ymberpoord()
-##soidavasakule(30)
-##sleep(2)
-##soidaparemale(30)
-##sleep(2)
-##ymberpoord()
-
