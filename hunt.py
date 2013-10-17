@@ -8,9 +8,9 @@ from time import sleep
 
 seadmed = []
 
-vasak = serial.Serial('/dev/ttyACM0')
-parem = serial.Serial('/dev/ttyACM1')
-coil = serial.Serial('/dev/ttyACM2')
+#vasak = serial.Serial('/dev/ttyACM3')
+#parem = serial.Serial('/dev/ttyACM4')
+#coil = serial.Serial('/dev/ttyACM5')
 
 def saaseadmed(): # saab id´d ainult siis kui aku toide on peal!!!!!
     global parem, vasak, coil
@@ -137,17 +137,23 @@ kernel = np.ones((5,5), "uint8")    #dilate jaoks
 while(1):
     start=time.time()
     _,f = c.read()
-    f = cv2.flip(f,1)
+##    f = cv2.flip(f,1)
     blur = cv2.medianBlur(f,5)
     hsv = cv2.cvtColor(f,cv2.COLOR_BGR2HSV)
 ##    color = getthresholdedimg(hsv)
 
     #Mis varvi on vaja taga ajada
     if kasPall():
-        if hele == pall_max:
+        if kasA():
             tume = sinine_min
             hele = sinine_max
-
+        else:
+            tume = kollane_min
+            hele = kollane_max
+    else:
+        tume = pall_min
+        hele = pall_max
+    
     
     thresh = cv2.inRange(hsv,np.array(tume), np.array(hele))
 
@@ -172,13 +178,20 @@ while(1):
 
  # x keskpunkt on 95
         if x < 95:
-            soidaparemale(20)
-        elif x > 105:
             soidavasakule(20)
+        elif x > 105:
+            soidaparemale(20)
         elif x>=95 and x<=105:
             soidaedasi(30)
-        else:
-            saadaseadmetele('sd5')
+##        else:
+##            saadaseadmetele('sd5')
+
+        if kasPall():
+            if area>10000:
+                annatuld(5000)
+                tume = pall_min
+                hele = pall_max
+                
             
     else:
         saadaseadmetele('sd5')
