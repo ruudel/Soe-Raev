@@ -1,28 +1,21 @@
 # -*- coding: utf-8 -*-
 import serial
+import numpy as np
+import cv2
+import time
 
 
 #===============================================================================
-# GLOBAALSED ASJAD
+# MUUTUJAD
 #===============================================================================
 
 seadmed = []
 
-global parem
-global vasak
-global coil
+global parem, vasak, coil
 
-global pallMin
-global pallMax
-global kollaneMin
-global kollaneMax
-global sinineMin
-global kollaneMax
-
-global tume
-global hele
-
-global sihik
+kernel = np.ones((5,5), "uint8")    #dilate jaoks
+    
+c = cv2.VideoCapture(1)
 
 #===============================================================================
 # VÄRVIDE INITSIALISEERIMINE
@@ -39,6 +32,9 @@ sinineMax = [140,300,130]
 
 mustMin = [95,35,0]
 mustMax = [135,180,55]
+
+tume = pallMin
+hele = pallMax
 
 #===============================================================================
 # LEIAB SEADMED
@@ -64,16 +60,44 @@ if len(seadmed)<2:
     print('Mingi seade on puudu!')
 
 #===============================================================================
-# KONTROLLIB KAS ON PALL HAMBUS
+# PEATSÜKKEL
 #===============================================================================
 
 while(1):
+    
+    start = time.time()
     
     #===========================================================================
     # PINGIB COILI KOGU AEG, ET SEE OLEKS ALATI VALMIS
     #===========================================================================    
     coil.write('c')
     coil.write('p')
+    
+    #===========================================================================
+    # SUSIVISIOON
+    #===========================================================================
+    
+    _,f = c.read()
+    hsv = cv2.cvtColor(f,cv2.COLOR_BGR2HSV)
+
+    thresh = cv2.inRange(hsv,np.array(tume), np.array(hele))
+
+    jooned = cv2.inRange(hsv, np.array(mustMin), np.array(mustMax))
+
+    erode = cv2.erode(thresh, kernel)
+    dilate = cv2.dilate(erode, kernel)
+
+    moments = cv2.moments(dilate)
+    area = moments['m00']
+    
+    if area > 0:
+        sihik = moments['m10']
+    else:
+        sihik = 0
+    
+    #===========================================================================
+    # UURIB KAS PALL ON HAMBUS
+    #===========================================================================
     
     parem.write('gb\n')
     if parem.readline() == '<b:1>\n':
@@ -108,7 +132,7 @@ while(1):
                 coil.write('k10000')
         
         #=======================================================================
-        # EI NÄE VÄRAVAT
+        # KUI EI NÄE VÄRAVAT, OTSI
         #=======================================================================
         
         else:
@@ -125,3 +149,16 @@ while(1):
         
         parem.write('sd10')
         vasak.prite('-sd10')
+        
+    print("FPS: " + (str)((int)(1/(time.time()-start))) + ", X: " + str(sihik))
+
+    cv2.imshow("Susivisoon", dilate)
+    cv2.imshow("Jooned", jooned)
+    
+    if cv2.waitKey(25) == 27:
+        parem.write('sd0')
+        vasak.write('sd0')
+        break
+
+cv2.destroyAllWindows()
+c.release()
