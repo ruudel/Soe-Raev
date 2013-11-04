@@ -1,7 +1,7 @@
 import serial
 import TopLevel
 
-class Seadmed(TopLevel):
+class Seadmed:
     
     seadmed = []
     

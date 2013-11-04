@@ -2,7 +2,7 @@ import TopLevel
 import numpy as np
 import cv2
 
-class Silmad(TopLevel):
+class Silmad:
 
     kernel = np.ones((5,5), "uint8")    #dilate jaoks
     
