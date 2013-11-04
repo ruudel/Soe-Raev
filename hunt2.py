@@ -124,6 +124,9 @@ hele = pall_max
 kernel = np.ones((5,5), "uint8")    #dilate jaoks
 
 while(1):
+
+    saada(coil, 'c')
+    saada(coil, 'p')
     start=time.time()
     _,f = c.read()
     hsv = cv2.cvtColor(f,cv2.COLOR_BGR2HSV)
@@ -161,6 +164,8 @@ while(1):
     y = 0
     
     if(area > 0):
+        saada(coil, 'c')
+        saada(coil, 'p')
 
         x = moments['m10']
         y = moments['m01']
@@ -193,7 +198,6 @@ while(1):
         
     if cv2.waitKey(25) == 27:
         stop()
+        cv2.destroyAllWindows()
+        c.release()
         break
-
-cv2.destroyAllWindows()
-c.release()
