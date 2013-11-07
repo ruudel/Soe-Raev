@@ -8,7 +8,7 @@ from time import sleep
 # FUNKSID!
 #===============================================================================
 
-def saaseadmed(): # saab id´d ainult siis kui aku toide on peal!!!!!
+def saaseadmed(): # saab idï¾´d ainult siis kui aku toide on peal!!!!!
     global parem, vasak, coil
 ##    parem = serial.Serial('/dev/ttyACM2')
 ##    vasak = serial.Serial('/dev/ttyACM0')
@@ -108,7 +108,7 @@ def annatuld(tugevus):
 
 #Loogika, mida Susi teeb, kui ta hoiab hetkel palli
 def pallOnSuus():
-    stop()                      #Kõige pealt võtame hoo maha ja mõtleme ühe nanosekundi
+    stop()                      #KÃµige pealt vÃµtame hoo maha ja mÃµtleme Ã¼he nanosekundi
     
     if x < 200 and x > 120:     #Kui varav on enamvahem keskel
         stop()      
@@ -126,9 +126,9 @@ def pallOnSuus():
 def pallPoleSuus():
     stop()
     
-    if joon['m01'] > 210:       #Kui must joon, mis halba õnne toob, on päris nina all, 
+    if joon['m01'] > 210:       #Kui must joon, mis halba Ãµnne toob, on pÃ¤ris nina all, 
         while joon['m01'] > 210:
-            otsi(15)            #Siis Susi enam edasi sõita ei taha vaid keerab otsa ringi
+            otsi(15)            #Siis Susi enam edasi sÃµita ei taha vaid keerab otsa ringi
     
     elif x < 140:               #kui sihik on vasakul siis soida vasakule
         vasak.write('sd15')
@@ -140,7 +140,7 @@ def pallPoleSuus():
         soidaedasi(30)
         
 
-#Loogika, kui ei leita palli või väravat
+#Loogika, kui ei leita palli vÃµi vÃ¤ravat
 def otsi(kiirus):
     if cnt>20:
         stop()
@@ -191,10 +191,11 @@ cnt = 0
 
 
 #===============================================================================
-# PEATSÜKKEL
+# PEATSÃœKKEL
 #===============================================================================
 
 while(1):
+    cnt = 0
     coil.write('c')
     coil.write('p')
     start=time.time()
@@ -218,7 +219,7 @@ while(1):
         tume = pall_min
         hele = pall_max
     
-    #igasugu pilditöötlus
+    #igasugu pilditÃ¶Ã¶tlus
     thresh = cv2.inRange(hsv,np.array(tume), np.array(hele))
     jooned = cv2.inRange(hsv, np.array(must_min), np.array(must_max))
     dilatejoon = cv2.dilate(jooned, kernel)
@@ -233,12 +234,12 @@ while(1):
     # ERINEVAD OLEKUD!
     #===========================================================================
     
-    #Hommik on käes ja Susi teeb silmad lahti, mis ta näeb?
-    #Lootuses kaadrisagedust tõsta, ei kasuta ma siin omatehtud funktsioone eriti
+    #Hommik on kÃ¤es ja Susi teeb silmad lahti, mis ta nÃ¤eb?
+    #Lootuses kaadrisagedust tÃµsta, ei kasuta ma siin omatehtud funktsioone eriti
     
-    if area > 0:                    #Kui ta üldse näeb midagi
+    if area > 0:                    #Kui ta Ã¼ldse nÃ¤eb midagi
         coil.write('p')
-        x = moments['m10']/area     #Siis ärkab Susi sees matemaatik, ta arvutab oma sihtmärgi koordinaadid
+        x = moments['m10']/area     #Siis Ã¤rkab Susi sees matemaatik, ta arvutab oma sihtmÃ¤rgi koordinaadid
         y = moments['m01']/area
         
         parem.write('gb\n')         #Susi kontrollib, kas tal juba midagi halbus pole
@@ -254,7 +255,7 @@ while(1):
     
     
     #===========================================================================
-    # TSÜKLI LÕPP
+    # TSÃœKLI LÃ•PP
     #===========================================================================
     
     print("FPS: " + (str)(1/(time.time()-start)))
