@@ -1,18 +1,17 @@
+# -*- coding: utf-8 -*-
 import cv2 
 import numpy as np
 import serial
 import time
 from time import sleep
 
-#===============================================================================
-# FUNKSID!
-#===============================================================================
+seadmed = []
 
-def saaseadmed(): # saab idﾴd ainult siis kui aku toide on peal!!!!!
+def saaseadmed(): # saab id´d ainult siis kui aku toide on peal!!!!!
     global parem, vasak, coil
-##    parem = serial.Serial('/dev/ttyACM2')
-##    vasak = serial.Serial('/dev/ttyACM0')
-##    coil = serial.Serial('/dev/ttyACM1')
+    parem = serial.Serial('/dev/ttyACM2')
+    vasak = serial.Serial('/dev/ttyACM0')
+    coil = serial.Serial('/dev/ttyACM1')
     for i in range(10):
         try:
             s=serial.Serial('/dev/ttyACM'+str(i),timeout=1,parity=serial.PARITY_NONE,baudrate=115200)
@@ -63,6 +62,14 @@ def soidavasakule(kiirus):
     saada(vasak, 'sd'+str(kiirus))
     saada(parem, 'sd-'+str(kiirus-kiirus*0.3))
 
+def loeseadmest(seade, sonum):
+    saada(seade,sonum)
+    print(seade.readline())
+
+def getthresholdedimg(hsv):
+    color = cv2.inRange(hsv,np.array(tume),np.array(hele))
+    return color
+
 def kasSinine():
     parem.write('go\n')
     v=parem.readline()
@@ -97,64 +104,17 @@ def kasPall():
 
 def annatuld(tugevus):
     saada(coil,'k'+str(tugevus))
-
-#===============================================================================
-# OLEKUTE FUNKSID
-#===============================================================================
-
-#Loogika, mida Susi teeb, kui ta hoiab hetkel palli
-def pallOnSuus():
-    stop()                      #Kõige pealt võtame hoo maha ja mõtleme ühe nanosekundi
-    
-    if x < 200 and x > 120:     #Kui varav on enamvahem keskel
-        stop()      
-        coil.write('k32000')    #Ja viruta pallile
-        tume = pall_min         #Ja hakka uuesti palli otsima
-        hele = pall_max
-        
-    else:                       #Aga kui varav pildi keskel pole siis otsi paremini
-        if x >= 200:
-            parem.write('sd-10')      #Keerle paremale poole
-        elif x <= 120:
-            vasak.write('sd10')
-
-#Loogika, mida Susi teeb, kui palli pole
-def pallPoleSuus():
-    stop()
-    
-    if joon['m01'] > 210:       #Kui must joon, mis halba õnne toob, on päris nina all, 
-        while joon['m01'] > 210:
-            otsi(15)            #Siis Susi enam edasi sõita ei taha vaid keerab otsa ringi
-    
-    elif x < 140:               #kui sihik on vasakul siis soida vasakule
-        vasak.write('sd15')
-        
-    elif x > 190:               #kui paremal siis paremale
-        parem.write('sd-15')
-        
-    else:                       #kui kuskil keskel siis edasi
-        soidaedasi(30)
         
 
-#Loogika, kui ei leita palli või väravat
-def otsi(kiirus):
-    if cnt>20:
-        stop()
-        soidaedasi(30)
-        sleep(0.5)
-        cnt=0
-        
-    else:
-        saadaseadmetele('sd'+str(kiirus))
-        cnt+=1
-    
-#===============================================================================
-# INIT
-#===============================================================================
+##################### ARA VALJA KOMMENTEERI! #######################
+saaseadmed()            # sebib oiged seadmed ja avab pordid
+saada(coil, 'c')        # laeb kondeka
+##########################################################
 
-seadmed = []
-saaseadmed()
-saada(coil, 'c')
+c = cv2.VideoCapture(1)
+
+c.set(3, 320)   #Pildi korgus
+c.set(4, 240)   #Laius
 
 pall_min = [0,225,140]
 pall_max = [10,255,200]
@@ -171,37 +131,19 @@ must_max = [91, 67, 92]
 tume = pall_min
 hele = pall_max
 
-c = cv2.VideoCapture(1)
-
-c.set(3, 320)   #Pildi korgus
-c.set(4, 240)   #Laius
-
 kernel = np.ones((5,5), "uint8")    #dilate jaoks
 
-#koordinaadid
-x = 0
-y = 0
-
-#kaunter keerlemise jaoks
-cnt = 0
-
-
-#===============================================================================
-# PEATSÜKKEL
-#===============================================================================
+#esiteks tulistab kohe keskplatsi suunas
+soidaedasi(30)
+sleep(0.5)
 
 while(1):
-    cnt = 0
-    coil.write('c')
-    coil.write('p')
+
+    saada(coil, 'c')
+    saada(coil, 'p')
     start=time.time()
     _,f = c.read()
     hsv = cv2.cvtColor(f,cv2.COLOR_BGR2HSV)
-    
-    #Esimese asjana, tulista platsi keskele
-    soidaedasi(40)
-    sleep(0.5)
-    stop()
 
     #Mis varvi on vaja taga ajada
     if kasPall():
@@ -215,44 +157,86 @@ while(1):
         tume = pall_min
         hele = pall_max
     
-    #igasugu pilditöötlus
     thresh = cv2.inRange(hsv,np.array(tume), np.array(hele))
-    jooned = cv2.inRange(hsv, np.array(must_min), np.array(must_max))
-    dilatejoon = cv2.dilate(jooned, kernel)
-    dilate = cv2.dilate(thresh, kernel)
-    moments = cv2.moments(dilate)
-    joon = cv2.moments(dilatejoon)
-    joonarea = joon['m00']
-    area = moments['m00']
-    
-    
-    #===========================================================================
-    # ERINEVAD OLEKUD!
-    #===========================================================================
-    
-    #Hommik on käes ja Susi teeb silmad lahti, mis ta näeb?
-    #Lootuses kaadrisagedust tõsta, ei kasuta ma siin omatehtud funktsioone eriti
-    
-    if area > 0:                    #Kui ta üldse näeb midagi
-        coil.write('p')
-        x = moments['m10']/area     #Siis ärkab Susi sees matemaatik, ta arvutab oma sihtmärgi koordinaadid
-        y = moments['m01']/area
-        
-        parem.write('gb\n')         #Susi kontrollib, kas tal juba midagi halbus pole
-        if '<b:1>\n' in parem.readline():
-            coil.write('p')
-            pallOnSuus()
-        else:
-            pallPoleSuus()
 
-    else:                           #Kui Susi saaki ei leia, peab ta paremaks ringi vaadata
-        while(area <= 0):
-            otsi(15)                #Kuskil miskit ikka hamba alla panna leidub
-    
-    
-    #===========================================================================
-    # TSÜKLI LÕPP
-    #===========================================================================
+    jooned = cv2.inRange(hsv, np.array(must_min), np.array(must_max))
+
+    dilatejoon = cv2.dilate(jooned, kernel)
+
+    dilate = cv2.dilate(thresh, kernel)
+
+    moments = cv2.moments(dilate)
+
+    joon = cv2.moments(dilatejoon)
+
+    joonarea = joon['m00']
+
+    area = moments['m00']
+
+    x = 0
+    y = 0
+
+    cnt = 0
+
+    #PEATSYKKEL
+    if(area > 0):       #kui naed mingit palli voi varavat
+        saada(coil, 'c')
+        saada(coil, 'p')
+
+        #arvuta koordinaadid
+        x = moments['m10']/area
+        y = moments['m01']/area
+
+        if joonarea > 0:  #kui musta joont on naha 
+            if joon['m01']/joonarea < y: #kui must joon pole nina all
+                
+                if hele != pall_max:    #kui otsitakse varavat
+                    if x < 180 and x > 140: #ja varav on enamvahem keskel
+                        stop()
+                        annatuld(32000)
+                        tume = pall_min
+                        hele = pall_max
+                    else:                   #muidu kui keskel pole siis otsi edasi
+                        saadaseadmetele('-sd10')
+                        
+                elif x < 140:   #kui sihik on vasakul siis vasakule
+                    stop()
+                    soidavasakule(40)
+                elif x > 190:   #kui paremal siis paremale
+                    stop()
+                    soidaparemale(40)
+                else:           #kui kuskil keskel siis edasi
+                    stop()
+                    soidaedasi(40)
+
+            else:   #kui on must nina all siis vaata ega varav pole
+                if kasPall():
+                    if x < 140 and x > 120: #ja varav on enamvahem keskel
+                        stop()
+                        annatuld(32000)
+                        tume = pall_min
+                        hele = pall_max
+                
+        else:   #aga kui musta joont pole naha siis soida julgelt
+            if x < 140:
+                stop()
+                soidavasakule(40)
+            elif x > 190:
+                stop()
+                soidaparemale(40)
+            else:
+                stop()
+                soidaedasi(40)
+    else:   #kui ei nae sihtmarki siis keerle
+        saadaseadmetele('sd20')
+        sleep(0.5)
+        stop()
+        soidaedasi(40)
+
+    x=0
+    y=0
+    joonarea=0
+    area=0
     
     print("FPS: " + (str)(1/(time.time()-start)))
     
