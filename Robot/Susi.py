@@ -186,6 +186,51 @@ while(1):
         #arvuta koordinaadid
         x = moments['m10']/area
         y = moments['m01']/area
+        
+        #kui joon on paris nina all
+        if joon['m01']/joonarea > 230:
+            stop()
+            vasak.write('sd20')
+
+            #kui joon on palli voi varava ees
+        elif joon['m01']/joonarea > y:
+            stop()
+                
+            #kui pall on siis loo
+            if kasPall():
+                if x < 140:
+                    stop()
+                    vasak.write('sd15')
+                elif x > 180:
+                    stop()
+                    parem.write('sd-15')
+                else:
+                    stop()
+                    annatuld(32000)
+
+            else:
+                stop()
+                ymberpoord()
+
+        else:
+            if x < 140:
+                stop()
+                soidavasakule(40)
+                
+            elif x > 180:
+                stop()
+                soidaparemale(40)
+                
+            else:
+                stop()
+                soidaedasi(50)
+
+    else:
+        vasak.write('sd20')
+
+
+
+
 
         if joonarea > 0:  #kui musta joont on naha 
             if joon['m01']/joonarea < y: #kui must joon pole nina all
