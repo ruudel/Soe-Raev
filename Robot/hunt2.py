@@ -70,7 +70,7 @@ def getthresholdedimg(hsv):
     color = cv2.inRange(hsv,np.array(tume),np.array(hele))
     return color
 
-def kasSin():
+def kasSinine():
     parem.write('go\n')
     v=parem.readline()
     if '<0mine>\n' in v:
@@ -78,7 +78,7 @@ def kasSin():
     else:
         return False
 
-def kasKol():
+def kasKollane():
     parem.write('go\n')
     v=parem.readline()
     if '<1mine>\n' in v:
@@ -147,10 +147,10 @@ while(1):
 
     #Mis varvi on vaja taga ajada
     if kasPall():
-        if kasSin():
+        if kasSinine():
             tume = sinine_min
             hele = sinine_max
-        elif kasKol():
+        elif kasKollane():
             tume = kollane_min
             hele = kollane_max
     else:
@@ -183,10 +183,11 @@ while(1):
         saada(coil, 'c')
         saada(coil, 'p')
 
+        #arvuta koordinaadid
         x = moments['m10']/area
         y = moments['m01']/area
 
-        if joonarea>0:  #kui musta joont on naha 
+        if joonarea > 0:  #kui musta joont on naha 
             if joon['m01']/joonarea < y: #kui must joon pole nina all
                 
                 if hele != pall_max:    #kui otsitakse varavat
@@ -197,17 +198,18 @@ while(1):
                         hele = pall_max
                     else:                   #muidu kui keskel pole siis otsi edasi
                         saadaseadmetele('-sd10')
-                        ymberpoord()
-                        soidaedasi(30)
                         
                 elif x < 140:   #kui sihik on vasakul siis vasakule
+                    stop()
                     soidavasakule(30)
                 elif x > 190:   #kui paremal siis paremale
+                    stop()
                     soidaparemale(30)
                 else:           #kui kuskil keskel siis edasi
+                    stop()
                     soidaedasi(30)
 
-            else:   #kui on must siis vaata ega varav pole
+            else:   #kui on must nina all siis vaata ega varav pole
                 if kasPall():
                     if x < 240 and x > 100: #ja varav on enamvahem keskel
                         stop()
@@ -215,25 +217,26 @@ while(1):
                         tume = pall_min
                         hele = pall_max
                 
-        else:   #aga kui musta joont pole naha siis keerle ringi
-            saadaseadmetele('sd10')
-            cnt +=1
-            if cnt > 20:
+        else:   #aga kui musta joont pole naha siis soida julgelt
+            if x < 140:
+                stop()
+                soidavasakule(30)
+            elif x > 190:
+                stop()
+                soidaparemale(30)
+            else:
+                stop()
                 soidaedasi(30)
-                sleep(0.5)
-                cnt = 0
     else:   #kui ei nae sihtmarki siis keerle
-        saadaseadmetele('sd10')
-        cnt +=1
-        if cnt > 20:
-            soidaedasi(30)
-            sleep(0.5)
-            cnt = 0
+        saadaseadmetele('sd15')
+        stop()
+        soidaedasi(30)
 
     x=0
     y=0
     joonarea=0
     area=0
+    
     print("FPS: " + (str)(1/(time.time()-start)))
     
     cv2.imshow("Susivisoon", dilate)
