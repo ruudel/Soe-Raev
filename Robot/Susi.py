@@ -200,6 +200,11 @@ while(1):
     start=time.time()
     _,f = c.read()
     hsv = cv2.cvtColor(f,cv2.COLOR_BGR2HSV)
+    
+    #Esimese asjana, tulista platsi keskele
+    soidaedasi(40)
+    sleep(0.5)
+    stop()
 
     #Mis varvi on vaja taga ajada
     if kasPall():
