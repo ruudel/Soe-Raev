@@ -9,13 +9,11 @@ import time
 # MUUTUJAD
 #===============================================================================
 
-seadmed = []
-
-global parem, vasak, coil
-
 kernel = np.ones((5,5), "uint8")    #dilate jaoks
     
 c = cv2.VideoCapture(1)
+c.set(3, 320)
+c.set(4, 240)
 
 #===============================================================================
 # VÄRVIDE INITSIALISEERIMINE
@@ -47,17 +45,12 @@ for i in range(10):
         idstr=s.readline()
         if (idstr=='<id:1>\n'):
             parem=s
-            seadmed.append(parem)
         elif (idstr=='<id:2>\n'):
             vasak=s
-            seadmed.append(vasak)
         else:
             coil=s
-            seadmed.append(coil)
     except serial.SerialException:
         pass
-if len(seadmed)<2:
-    print('Mingi seade on puudu!')
 
 #===============================================================================
 # PEATSÜKKEL
