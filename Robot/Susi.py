@@ -63,10 +63,6 @@ def soidavasakule(kiirus):
     saada(vasak, 'sd'+str(kiirus))
     saada(parem, 'sd-'+str(kiirus-kiirus*0.3))
 
-def loeseadmest(seade, sonum):
-    saada(seade,sonum)
-    print(seade.readline())
-
 def kasSinine():
     parem.write('go\n')
     v=parem.readline()
