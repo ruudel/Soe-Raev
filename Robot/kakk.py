@@ -104,11 +104,13 @@ saada(coil, 'c')        # laeb kondeka
 
 c = cv2.VideoCapture(1)
 
-# c.set(3, 320)   #Pildi korgus
-# c.set(4, 240)   #Laius
+c.set(3, 320)   #Pildi korgus
+c.set(4, 240)   #Laius
 
-c.set(3, 640)   #Pildi korgus
-c.set(4, 420)   #Laius
+#===============================================================================
+# c.set(3, 640)   #Pildi korgus
+# c.set(4, 420)   #Laius
+#===============================================================================
 
 pall_min = [0,225,140]
 pall_max = [10,255,200]
@@ -129,8 +131,8 @@ kernel = np.ones((5,5), "uint8")    #dilate jaoks
 
 while(1):
 
-    saada(coil, 'c')
-    saada(coil, 'p')
+    coil.write('c')
+    coil.write('p')
     start=time.time()
     _,f = c.read()
     hsv = cv2.cvtColor(f,cv2.COLOR_BGR2HSV)
@@ -175,10 +177,10 @@ while(1):
         x = moments['m10']/area
         y = moments['m01']/area
         
-        if x < 300:
+        if x < 150:
             stop()
             soidavasakule(40)
-        elif x < 340:
+        elif x > 170:
             stop()
             soidaparemale(40)
         else:
