@@ -29,84 +29,13 @@ def saaseadmed(): # saab id´d ainult siis kui aku toide on peal!!!!!
     if len(seadmed)==0:
         print('Seadmeid ei leitud!')
 
-def saada(seade, sonum):
-    seade.write(sonum+'\n')
+saaseadmed()
 
-def saadaseadmetele(sonum):
-    saada(vasak, sonum)
-    saada(parem, sonum)
-
-def stop():
-    saadaseadmetele('sd0')
-
-def soidaedasi(kiirus):
-    saada(vasak,'sd'+str(kiirus))
-    saada(parem,'sd-'+str(kiirus))
-
-def tagane(kiirus):
-    saada(vasak,'sd-'+str(kiirus))
-    saada(parem,'sd'+str(kiirus))
-
-def ymberpoord():
-    saadaseadmetele('sd20\n')
-    sleep(0.7)
-    saadaseadmetele('sd0')
-
-def soidaparemale(kiirus):
-    saada(vasak, 'sd'+str(kiirus-kiirus*0.3))
-    saada(parem, 'sd-'+str(kiirus))
-
-def soidavasakule(kiirus):
-    saada(vasak, 'sd'+str(kiirus))
-    saada(parem, 'sd-'+str(kiirus-kiirus*0.3))
-
-def loeseadmest(seade, sonum):
-    saada(seade,sonum)
-    print(seade.readline())
-
-def getthresholdedimg(hsv):
-    color = cv2.inRange(hsv,np.array(tume),np.array(hele))
-    return color
-
-def kasA():
-    parem.write('go\n')
-    v=parem.readline()
-    if v=='<0mine>\n':
-        return True
-    else:
-        return False
-
-def kasB():
-    parem.write('gl\n')
-    v=parem.readline()
-    if v=='<0varav>\n':
-        return True
-    else:
-        return False
-
-def kasPall():
-    parem.write('gb\n')
-    v=parem.readline()
-    if v=='<b:1>\n':
-        return True
-    else:
-        return False
-
-def annatuld(tugevus):
-    saada(coil,'k'+str(tugevus))
-        
-
-##################### ARA VALJA KOMMENTEERI! #######################
-saaseadmed()            # sebib oiged seadmed ja avab pordid
-saadaseadmetele('fs1')  # lylitab autom peatamise v2lja
-saada(coil, 'c')        # laeb kondeka
-##########################################################
-
-c = cv2.VideoCapture(1)
+c = cv2.VideoCapture(0)
 
 
-c.set(3, 200)   #Pildi korgus
-c.set(4, 200)   #Laius
+c.set(3, 320)   #Pildi korgus
+c.set(4, 240)   #Laius
 
 #tty v2rv
 ##pall_min = [0,235,120]
@@ -135,7 +64,6 @@ kernel = np.ones((5,5), "uint8")    #dilate jaoks
 while(1):
     start=time.time()
     _,f = c.read()
-    blur = cv2.medianBlur(f,5)
     hsv = cv2.cvtColor(f,cv2.COLOR_BGR2HSV)
 
     thresh = cv2.inRange(hsv,np.array(tume), np.array(hele))
@@ -143,34 +71,30 @@ while(1):
     erode = cv2.erode(thresh, kernel)
     dilate = cv2.dilate(erode, kernel)
 
-    moments = cv2.moments(thresh)
+    moments = cv2.moments(dilate)
     area = moments['m00']
-    saada(coil, 'p') # pingib coilguni, et kondekad tyhjaks ei laeks
-    
-    if area > 0:
-        x = moments['m10'] / area
-        if x < 85:
-            soidavasakule(30)
-        elif x > 100:
-            soidaparemale(30)
-        elif x>=85 and x<=100:
-            soidaedasi(30)
-    else:
-        parem.write('sd10')
-        vasak.write('sd10')
+    coil.write('c')
+    coil.write('p') # pingib coilguni, et kondekad tyhjaks ei laeks
 
-    parem.write('gb\n')
-    if parem.readline()=='<b:1>\n':
-        if kasA():
+    x = 0 # keskpunkt
+
+    #kas on pall
+    parem.write('gb')
+    if parem.readline()=='<b:1>':
+        coil.write('p')
+
+        #kumb varav
+        parem.write('go\n')
+        v=parem.readline()
+        if v=='<0mine>\n':
             tume = sinine_min
             hele = sinine_max
-
-        elif kasB():
+        elif v=='<1mine>\n':
             tume = kollane_min
             hele = kollane_max
-            
+        
         if x > 70 and x < 110:
-            saada(coil,'k10000')
+            coil.write('k10000')
         
         elif x > 110:
             parem.write('sd10')
@@ -183,13 +107,28 @@ while(1):
     else:
         tume = pall_min
         hele = pall_max
+    
+    if area > 0:
+        x = moments['m10']
+        if x < 150:
+            parem.write('sd20')
+            vasak.write('sd10')
+        elif x > 170:
+            parem.write('-sd20')
+            vasak.write('-sd10')
+        else:
+            soidaedasi(30)
+    else:
+        parem.write('sd10')
+        vasak.write('sd10')
         
-    print("FPS: " + (str)((int)(1/(time.time()-start))) + ", X: " + str(x))
+    print("FPS: " + (str)((int)(1/(time.time()-start))))
     
     cv2.imshow("Susivisoon", dilate)
         
     if cv2.waitKey(25) == 27:
-        stop()
+        parem.write('sd0')
+        vasak.write('sd0')
         break
 
 cv2.destroyAllWindows()

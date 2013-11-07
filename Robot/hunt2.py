@@ -9,9 +9,9 @@ seadmed = []
 
 def saaseadmed(): # saab id´d ainult siis kui aku toide on peal!!!!!
     global parem, vasak, coil
-##    parem = serial.Serial('/dev/ttyACM2')
-##    vasak = serial.Serial('/dev/ttyACM0')
-##    coil = serial.Serial('/dev/ttyACM1')
+    parem = serial.Serial('/dev/ttyACM2')
+    vasak = serial.Serial('/dev/ttyACM0')
+    coil = serial.Serial('/dev/ttyACM1')
     for i in range(10):
         try:
             s=serial.Serial('/dev/ttyACM'+str(i),timeout=1,parity=serial.PARITY_NONE,baudrate=115200)
@@ -133,6 +133,10 @@ hele = pall_max
 
 kernel = np.ones((5,5), "uint8")    #dilate jaoks
 
+#esiteks tulistab kohe keskplatsi suunas
+soidaedasi(30)
+sleep(0.5)
+
 while(1):
 
     saada(coil, 'c')
@@ -174,59 +178,51 @@ while(1):
 
     cnt = 0
 
-    if joon['m01'] > 200:   #kui must joon pole nina all siis vaata edasis
-        if(area > 0):       #aga kui pole ja naed mingit palli voi varavat
-            saada(coil, 'c')
-            saada(coil, 'p')
+    #PEATSYKKEL
+    if(area > 0):       #kui naed mingit palli voi varavat
+        saada(coil, 'c')
+        saada(coil, 'p')
 
-            x = moments['m10']/area
-            y = moments['m01']/area
+        x = moments['m10']/area
+        y = moments['m01']/area
 
-            if joonarea>0:  #kui musta joont on naha 
-                if joon['m01']/joonarea < y: #kui must joon on nina all
-                    
-                    if hele != pall_max:    #kui otsitakse varavat
-                        if x < 300 and x > 100: #ja varav on enamvahem keskel
-                            stop()
-                            annatuld(32000)
-                            tume = pall_min
-                            hele = pall_max
-                        else:                   #muidu kui keskel pole siis otsi edasi
-                            saadaseadmetele('-sd10')
-                            cnt +=1
-                            if cnt > 20:
-                                soidaedasi(30)
-                                cnt = 0
-                            
-                    elif x < 140:   #kui sihik on vasakul siis vasakule
-                        soidavasakule(30)
-                    elif x > 190:   #kui paremal siis paremale
-                        soidaparemale(30)
-                    else:           #kui kuskil keskel siis edasi
+        if joonarea>0:  #kui musta joont on naha 
+            if joon['m01']/joonarea < y: #kui must joon pole nina all
+                
+                if hele != pall_max:    #kui otsitakse varavat
+                    if x < 200 and x > 120: #ja varav on enamvahem keskel
+                        stop()
+                        annatuld(32000)
+                        tume = pall_min
+                        hele = pall_max
+                    else:                   #muidu kui keskel pole siis otsi edasi
+                        saadaseadmetele('-sd10')
+                        ymberpoord()
                         soidaedasi(30)
+                        
+                elif x < 140:   #kui sihik on vasakul siis vasakule
+                    soidavasakule(30)
+                elif x > 190:   #kui paremal siis paremale
+                    soidaparemale(30)
+                else:           #kui kuskil keskel siis edasi
+                    soidaedasi(30)
 
-                else:   #kui pole musta yldse ja on pall
+            else:   #kui on must siis vaata ega varav pole
+                if kasPall():
                     if x < 240 and x > 100: #ja varav on enamvahem keskel
                         stop()
                         annatuld(32000)
                         tume = pall_min
                         hele = pall_max
-                    
-            else:   #aga kui musta joont pole naha siis keerle ringi
-                saadaseadmetele('sd10')
-                cnt +=1
-                if cnt > 20:
-                    soidaedasi(30)
-                    sleep(0.5)
-                    cnt = 0
-        else:   #kui ei nae sihtmarki siis keerle
+                
+        else:   #aga kui musta joont pole naha siis keerle ringi
             saadaseadmetele('sd10')
             cnt +=1
             if cnt > 20:
                 soidaedasi(30)
                 sleep(0.5)
                 cnt = 0
-    else:   #kui must joon on nina all siis keerle
+    else:   #kui ei nae sihtmarki siis keerle
         saadaseadmetele('sd10')
         cnt +=1
         if cnt > 20:
@@ -234,9 +230,13 @@ while(1):
             sleep(0.5)
             cnt = 0
 
+    x=0
+    y=0
+    joonarea=0
+    area=0
     print("FPS: " + (str)(1/(time.time()-start)))
     
-##    cv2.imshow("Susivisoon", dilate)
+    cv2.imshow("Susivisoon", dilate)
 ##    cv2.imshow("Jooned", dilatejoon)
         
     if cv2.waitKey(25) == 27:
