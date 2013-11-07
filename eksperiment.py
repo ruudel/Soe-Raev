@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import cv2 
 import numpy as np
+import cv2.cv as cv
 import serial
 import time
 from time import sleep
@@ -9,9 +10,9 @@ seadmed = []
 
 def saaseadmed(): # saab id´d ainult siis kui aku toide on peal!!!!!
     global parem, vasak, coil
-    parem = serial.Serial('/dev/ttyACM2')
-    vasak = serial.Serial('/dev/ttyACM0')
-    coil = serial.Serial('/dev/ttyACM1')
+##    parem = serial.Serial('/dev/ttyACM2')
+##    vasak = serial.Serial('/dev/ttyACM0')
+##    coil = serial.Serial('/dev/ttyACM1')
     for i in range(10):
         try:
             s=serial.Serial('/dev/ttyACM'+str(i),timeout=1,parity=serial.PARITY_NONE,baudrate=115200)
@@ -70,7 +71,7 @@ def getthresholdedimg(hsv):
     color = cv2.inRange(hsv,np.array(tume),np.array(hele))
     return color
 
-def kasSinine():
+def kasSin():
     parem.write('go\n')
     v=parem.readline()
     if '<0mine>\n' in v:
@@ -78,7 +79,7 @@ def kasSinine():
     else:
         return False
 
-def kasKollane():
+def kasKol():
     parem.write('go\n')
     v=parem.readline()
     if '<1mine>\n' in v:
@@ -111,7 +112,7 @@ saaseadmed()            # sebib oiged seadmed ja avab pordid
 saada(coil, 'c')        # laeb kondeka
 ##########################################################
 
-c = cv2.VideoCapture(1)
+c = cv2.VideoCapture(0)
 
 c.set(3, 320)   #Pildi korgus
 c.set(4, 240)   #Laius
@@ -133,10 +134,6 @@ hele = pall_max
 
 kernel = np.ones((5,5), "uint8")    #dilate jaoks
 
-#esiteks tulistab kohe keskplatsi suunas
-soidaedasi(30)
-sleep(0.5)
-
 while(1):
 
     saada(coil, 'c')
@@ -145,14 +142,12 @@ while(1):
     _,f = c.read()
     hsv = cv2.cvtColor(f,cv2.COLOR_BGR2HSV)
 
-    stop()
-    
     #Mis varvi on vaja taga ajada
     if kasPall():
-        if kasSinine():
+        if kasSin():
             tume = sinine_min
             hele = sinine_max
-        elif kasKollane():
+        elif kasKol():
             tume = kollane_min
             hele = kollane_max
     else:
@@ -180,111 +175,45 @@ while(1):
 
     cnt = 0
 
-    #PEATSYKKEL
-    if(area > 0):       #kui naed mingit palli voi varavat
-        saada(coil, 'c')
-        saada(coil, 'p')
+    if joon['m01'] > 200:   #kui must joon pole nina all siis vaata edasis
+        if(area > 0):       #aga kui pole ja naed mingit palli voi varavat
+            saada(coil, 'c')
+            saada(coil, 'p')
 
-        #arvuta koordinaadid
-        x = moments['m10']/area
-        y = moments['m01']/area
-        
-        #kui joon on paris nina all
-        if joon['m01']/joonarea > 230:
-            stop()
-            vasak.write('sd20')
+            x = moments['m10']/area
+            y = moments['m01']/area
 
-            #kui joon on palli voi varava ees
-        elif joon['m01']/joonarea > y:
-            stop()
-                
-            #kui pall on siis loo
-            if kasPall():
-                if x < 140:
-                    stop()
-                    vasak.write('sd15')
-                elif x > 180:
-                    stop()
-                    parem.write('sd-15')
-                else:
-                    stop()
-                    annatuld(32000)
+            if joonarea>0:  #kui musta joont on naha 
+                if joon['m01']/joonarea < y: #kui must joon on nina all
+                    
+                    if hele != pall_max:    #kui otsitakse varavat
+                        if x < 190 and x > 120: #ja varav on enamvahem keskel
+                            stop()
+                            annatuld(32000)
+                        else:                   #muidu kui keskel pole siis otsi edasi
+                            saadaseadmetele('-sd10')
+                            
+                    elif x < 140:   #kui sihik on vasakul siis vasakule
+                        soidavasakule(40)
+                    elif x > 190:   #kui paremal siis paremale
+                        soidaparemale(40)
+                    else:           #kui kuskil keskel siis edasi
+                        soidaedasi(40)
 
-            else:
-                stop()
-                ymberpoord()
+                else:   #kui pole musta yldse ja on pall
+                    if x < 180 and x > 120: #ja varav on enamvahem keskel
+                        stop()
+                        annatuld(32000)
+                        tume = pall_min
+                        hele = pall_max
+                    
+            else:   #aga kui musta joont pole naha siis keerle ringi
+                saadaseadmetele('sd15')
+        else:   #kui ei nae sihtmarki siis keerle
+            saadaseadmetele('sd15')
+    else:   #kui must joon on nina all siis keerle
+        saadaseadmetele('sd15')
 
-        else:
-            if x < 140:
-                stop()
-                soidavasakule(40)
-                
-            elif x > 180:
-                stop()
-                soidaparemale(40)
-                
-            else:
-                stop()
-                soidaedasi(50)
-
-    else:
-        vasak.write('sd20')
-
-
-
-
-
-##        if joonarea > 0:  #kui musta joont on naha 
-##            if joon['m01']/joonarea < y: #kui must joon pole nina all
-##                
-##                if hele != pall_max:    #kui otsitakse varavat
-##                    if x < 180 and x > 140: #ja varav on enamvahem keskel
-##                        stop()
-##                        annatuld(32000)
-##                        tume = pall_min
-##                        hele = pall_max
-##                    else:                   #muidu kui keskel pole siis otsi edasi
-##                        saadaseadmetele('-sd10')
-##                        
-##                elif x < 140:   #kui sihik on vasakul siis vasakule
-##                    stop()
-##                    soidavasakule(40)
-##                elif x > 190:   #kui paremal siis paremale
-##                    stop()
-##                    soidaparemale(40)
-##                else:           #kui kuskil keskel siis edasi
-##                    stop()
-##                    soidaedasi(40)
-##
-##            else:   #kui on must nina all siis vaata ega varav pole
-##                if kasPall():
-##                    if x < 140 and x > 120: #ja varav on enamvahem keskel
-##                        stop()
-##                        annatuld(32000)
-##                        tume = pall_min
-##                        hele = pall_max
-##                
-##        else:   #aga kui musta joont pole naha siis soida julgelt
-##            if x < 140:
-##                stop()
-##                soidavasakule(40)
-##            elif x > 190:
-##                stop()
-##                soidaparemale(40)
-##            else:
-##                stop()
-##                soidaedasi(40)
-##    else:   #kui ei nae sihtmarki siis keerle
-##        saadaseadmetele('sd20')
-##        sleep(0.5)
-##        stop()
-##        soidaedasi(40)
-
-    x=0
-    y=0
-    joonarea=0
-    area=0
-    
     print("FPS: " + (str)(1/(time.time()-start)))
     
     cv2.imshow("Susivisoon", dilate)

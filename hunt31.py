@@ -178,17 +178,17 @@ while(1):
     if area > 0:
         x = moments['m10'] / area
         if x < 85:
-            #soidavasakule(30)
+            soidavasakule(30)
             print 'vasak 30'
         elif x > 100:
-            #soidaparemale(30)
+            soidaparemale(30)
             print 'parem 30'
         elif x>=85 and x<=100:
-            #soidaedasi(30)
+            soidaedasi(30)
             print 'edasi 30'
     else:
-        #parem.write('sd10')
-        #vasak.write('sd10')
+        parem.write('sd10')
+        vasak.write('sd10')
         print 'parem vasak 10'
 
     parem.write('gb\n')
@@ -204,17 +204,17 @@ while(1):
             print 'kas b'
             
         if x > 70 and x < 110:
-            #saada(coil,'k500')
+            saada(coil,'k500')
             print 'pauk'
         
         elif x > 110:
-            #parem.write('sd10')
-            #vasak.write('sd10')
+            parem.write('sd10')
+            vasak.write('sd10')
             print 'parem vasak 10'
 
         elif x < 70:
-            #parem.write('sd-10')
-            #vasak.write('sd-10')
+            parem.write('sd-10')
+            vasak.write('sd-10')
             print 'parem vasak 10'
         
     else:
