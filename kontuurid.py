@@ -97,7 +97,9 @@ def leiaTsentrid(contours):
             center = (x,y)
 
             center = map(lambda i: int(round(i)), center)
-    return center
+            return center
+        else:
+            return None
 
 def joonistaTsentrid(center, image):
     cv2.circle(image, tuple(center),20,cv.RGB(255,0,0),2)
@@ -108,17 +110,17 @@ c.set(3, 320)   #Pildi korgus
 c.set(4, 240)   #Laius
 c.set(cv.CV_CAP_PROP_FPS, 30)
 
-pall_min = [0,163,61]
-pall_max = [25,255,242]
+pall_min = [2,141,86]
+pall_max = [17,255,240]
 
-sinine_min = [105,160,90]
-sinine_max =  [115,210,165]
+sinine_min = [84,133,27]
+sinine_max =  [116,229,147]
 
-kollane_min = [23,116,137]
-kollane_max = [32,165,231]
+kollane_min = [28,130,134]
+kollane_max = [32,172,191]
 
-must_min = [61, 26, 0]
-must_max = [91, 67, 92]
+must_min = [62, 25, 78]
+must_max = [86, 48, 118]
 
 tume = pall_min
 hele = pall_max
@@ -127,11 +129,12 @@ kernel = np.ones((5,5), "uint8")    #dilate jaoks
 
 maxArea = 0
 
+kiirus = 20
+
 while(1):
 
     saada(coil, 'c')
     saada(coil, 'p')
-    start=time.time()
     _,f = c.read()
     hsv = cv2.cvtColor(f,cv2.COLOR_BGR2HSV)
 
@@ -155,44 +158,34 @@ while(1):
 
     dilate = cv2.dilate(thresh, kernel)
 
-##    moments = cv2.moments(dilate)
-##
-##    joon = cv2.moments(dilatejoon)
-##
-##    joonarea = joon['m00']
-##
-##    area = moments['m00']
-##
-##    x = 0
-##    y = 0
-
     kontuurimaagia = np.zeros((240,320, 3), np.uint8)
 
     contours, hierarchy = cv2.findContours(dilate, cv.CV_RETR_EXTERNAL, cv.CV_CHAIN_APPROX_NONE)
 
-##    cv2.drawContours(kontuurimaagia, contours, -1, cv2.cv.RGB(0,255,0),-1) 
-
     centers = leiaTsentrid(contours)
 
     cv2.drawContours(kontuurimaagia, contours, -1, cv.RGB(255,255,255),2)
-    joonistaTsentrid(centers, kontuurimaagia)
+
+    if centers != None:
+        joonistaTsentrid(centers, kontuurimaagia)
 
     ##SIIN ALGAB LOOGIKA
 
-    
-
-
-
-
-
-    
-
-
+        if centers[0] > 180:
+            soidaparemale(kiirus)
+        elif centers[0] < 140:
+            soidavasakule(kiirus)
+        else:
+            if kasPall():
+                annatuld(10000)
+            soidaedasi(kiirus)
+    else:
+        stop()
     
 
 ##    print("FPS: " + str(int(1/(time.time()-start))))
     cv2.imshow("Susivisoon", kontuurimaagia)
-##    cv2.imshow("Reaalvisoon", f)
+    cv2.imshow("Reaalvisoon", f)
 ##    cv2.imshow("Jooned", dilatejoon)
         
     if cv2.waitKey(2) >= 0:
