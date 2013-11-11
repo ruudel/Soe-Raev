@@ -188,13 +188,20 @@ while(1):
 
     center = leiaTsenter(contours)
 
+    #Liikumise loogeka
     if center != None:
         joonistaTsenter(center, kontuurimaagia)
 
         if center[0] > 180:
-            soidaparemale(kiirus)
+            if kasPall():
+                vasak.write('sd-15')
+            else:
+                soidaparemale(kiirus)
         elif center[0] < 140:
-            soidavasakule(kiirus)
+            if kasPall():
+                vasak.write('sd15')
+            else:
+                soidavasakule(kiirus)
         else:
             if kasPall():
                 if center[1] > 180:
@@ -205,6 +212,8 @@ while(1):
     else:
         if kasPall():
             soidaparemale(kiirus)
+        else:
+            otsi()
     
 ##    print("FPS: " + str(int(1/(time.time()-start))))
     cv2.imshow("Susivisoon", kontuurimaagia)
