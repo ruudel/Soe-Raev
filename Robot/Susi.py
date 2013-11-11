@@ -88,7 +88,7 @@ def otsi():
     joonemomendid = cv2.moments(dilatejoon)
     
     #kui must joon ees on, siis edasi ei soida
-    if joonemomendid['m01'] < 220:
+    if joonemomendid['m01'] < 180:
         stop()
         ymberpoord()
         
@@ -96,8 +96,6 @@ def otsi():
             soidavasakule(kiirus)
         elif joonemomendid['m01'] >= 160:
             soidaparemale(kiirus)
-        
-        time.sleep(0.1)
     
     else:
         soidaedasi(kiirus)
@@ -130,7 +128,7 @@ c = cv2.VideoCapture(0)
 
 c.set(3, 320)   #Pildi korgus
 c.set(4, 240)   #Laius
-
+4
 pall_min = [2,183,92]
 pall_max = [16,255,229]
 
@@ -150,7 +148,7 @@ kernel = np.ones((5,5), "uint8")    #dilate jaoks
 
 maxArea = 0
 
-kiirus = 35
+kiirus = 45
 
 while(1):
 
@@ -188,35 +186,43 @@ while(1):
 
     center = leiaTsenter(contours)
 
+    
+
     #Liikumise loogeka
     if center != None:
         joonistaTsenter(center, kontuurimaagia)
+        joonemomendid = cv2.moments(dilatejoon)
 
+        if joonemomendid['m01'] < center[1]:
+            continue
+        
         if center[0] > 180:
             if kasPall():
-                vasak.write('sd-15')
+                vasak.write('sd-25')
             else:
                 soidaparemale(kiirus)
         elif center[0] < 140:
             if kasPall():
-                vasak.write('sd15')
+                vasak.write('sd25')
             else:
                 soidavasakule(kiirus)
         else:
             if kasPall():
-                if center[1] > 180:
-                    soidaedasi(kiirus)
-                else:
                     stop()
                     annatuld(32000)
+            else:
+                soidaedasi(kiirus)
     else:
         if kasPall():
-            soidaparemale(kiirus)
+            vasak.write('sd-25')
         else:
-            otsi()
+            vasak.write('sd-25')
     
 ##    print("FPS: " + str(int(1/(time.time()-start))))
     cv2.imshow("Susivisoon", kontuurimaagia)
+##    cv2.imshow("Joonevisioon", dilatejoon)
+
+##    cv2.imshow("Reaalvisoon", f)
         
     if cv2.waitKey(2) >= 0:
         stop()
