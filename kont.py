@@ -69,58 +69,61 @@ def kasB():
     else:
         return False
 
-def kasPall():
+def kasPall(tase=0):
+    if tase==2:
+        return False
     parem.write('gb\n')
     v=parem.readline()
-    if '<b:1>\n' in v:
+    if '<b:1>' in v:
         return True
-    else:
+    elif '<b:0>' in v:
         return False
+    else:
+        return kasPall(tase+1)
 
 def annatuld(tugevus):
     saada(coil,'k'+str(tugevus))
 
-def leiaTsentrid(contours):
-    x = 0
-    y = 0
+def leiaTsenter(contours):
+    x=0
+    y=0
     for contour in contours:
         moments = cv2.moments(contour, True)
 
-        #kui moment on 0, siis eira
+        #kui moment 0, siis eira
         if (len(filter(lambda i: i==0, moments.values())) > 0):
             continue
 
         if moments['m00'] > maxArea:
-            x = moments['m10']/moments['m00']
-            y = moments['m01']/moments['m00']
-            
-            center = (x,y)
+            x=moments['m10']/moments['m00']
+            y=moments['m01']/moments['m00']
 
-            center = map(lambda i: int(round(i)), center)
+            center=(x,y)
+
+            center = map(lambda i:int(round(i)), center)
             return center
         else:
             return None
 
-def joonistaTsentrid(center, image):
-    cv2.circle(image, tuple(center),20,cv.RGB(255,0,0),2)
+def joonistaTsenter(center, image):
+    cv2.circle(image, tuple(center), 20, cv.RGB(255,0,0),2)
 
 c = cv2.VideoCapture(0)
 
 c.set(3, 320)   #Pildi korgus
 c.set(4, 240)   #Laius
-c.set(cv.CV_CAP_PROP_FPS, 30)
 
-pall_min = [2,141,86]
-pall_max = [17,255,240]
+pall_min = [2,183,92]
+pall_max = [16,255,229]
 
-sinine_min = [84,133,27]
-sinine_max =  [116,229,147]
+sinine_min = [83,148,72]
+sinine_max =  [124,213,172]
 
-kollane_min = [28,130,134]
-kollane_max = [32,172,191]
+kollane_min = [20,148,132]
+kollane_max = [29,255,218]
 
-must_min = [62, 25, 78]
-must_max = [86, 48, 118]
+must_min = [61, 26, 0]
+must_max = [91, 67, 92]
 
 tume = pall_min
 hele = pall_max
@@ -135,6 +138,7 @@ while(1):
 
     saada(coil, 'c')
     saada(coil, 'p')
+    start=time.time()
     _,f = c.read()
     hsv = cv2.cvtColor(f,cv2.COLOR_BGR2HSV)
 
@@ -162,31 +166,26 @@ while(1):
 
     contours, hierarchy = cv2.findContours(dilate, cv.CV_RETR_EXTERNAL, cv.CV_CHAIN_APPROX_NONE)
 
-    centers = leiaTsentrid(contours)
+    cv2.drawContours(kontuurimaagia, contours, -1, cv2.cv.RGB(0,255,0),2)
 
-    cv2.drawContours(kontuurimaagia, contours, -1, cv.RGB(255,255,255),2)
+    center = leiaTsenter(contours)
 
-    if centers != None:
-        joonistaTsentrid(centers, kontuurimaagia)
+    if center != None:
+        joonistaTsenter(center, kontuurimaagia)
 
-    ##SIIN ALGAB LOOGIKA
-
-        if centers[0] > 180:
+        if center[0] > 180:
             soidaparemale(kiirus)
-        elif centers[0] < 140:
+        elif center[0] < 140:
             soidavasakule(kiirus)
         else:
             if kasPall():
+                stop()
                 annatuld(10000)
-            soidaedasi(kiirus)
     else:
         stop()
     
-
 ##    print("FPS: " + str(int(1/(time.time()-start))))
     cv2.imshow("Susivisoon", kontuurimaagia)
-    cv2.imshow("Reaalvisoon", f)
-##    cv2.imshow("Jooned", dilatejoon)
         
     if cv2.waitKey(2) >= 0:
         stop()
