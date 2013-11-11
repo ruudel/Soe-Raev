@@ -84,6 +84,30 @@ def kasPall(tase=0):
 def annatuld(tugevus):
     saada(coil,'k'+str(tugevus))
 
+def leiaTsenter(contours):
+    x=0
+    y=0
+    for contour in contours:
+        moments = cv2.moments(contour, True)
+
+        #kui moment 0, siis eira
+        if (len(filter(lambda i: i==0, moments.values())) > 0):
+            continue
+
+        if moments['m00'] > maxArea:
+            x=moments['m10']/moments['m00']
+            y=moments['m01']/moments['m00']
+
+            center=(x,y)
+
+            center = map(lambda i:int(round(i)), center)
+            return center
+        else:
+            return None
+
+def joonistaTsenter(center, image):
+    cv2.circle(image, tuple(center), 20, cv.RGB(255,0,0),2)
+
 c = cv2.VideoCapture(0)
 
 c.set(3, 320)   #Pildi korgus
@@ -105,6 +129,10 @@ tume = pall_min
 hele = pall_max
 
 kernel = np.ones((5,5), "uint8")    #dilate jaoks
+
+maxArea = 0
+
+kiirus = 20
 
 while(1):
 
@@ -134,26 +162,30 @@ while(1):
 
     dilate = cv2.dilate(thresh, kernel)
 
-    moments = cv2.moments(dilate)
-
-    joon = cv2.moments(dilatejoon)
-
-    joonarea = joon['m00']
-
-    area = moments['m00']
-##
-##    x = 0
-##    y = 0
-
     kontuurimaagia = np.zeros((240,320, 3), np.uint8)
 
     contours, hierarchy = cv2.findContours(dilate, cv.CV_RETR_EXTERNAL, cv.CV_CHAIN_APPROX_NONE)
 
     cv2.drawContours(kontuurimaagia, contours, -1, cv2.cv.RGB(0,255,0),2)
 
+    center = leiaTsenter(contours)
+
+    if center != None:
+        joonistaTsenter(center, kontuurimaagia)
+
+        if center[0] > 180:
+            soidaparemale(kiirus)
+        elif center[0] < 140:
+            soidavasakule(kiirus)
+        else:
+            if kasPall():
+                stop()
+                annatuld(10000)
+    else:
+        stop()
+    
 ##    print("FPS: " + str(int(1/(time.time()-start))))
     cv2.imshow("Susivisoon", kontuurimaagia)
-##    cv2.imshow("Jooned", dilatejoon)
         
     if cv2.waitKey(2) >= 0:
         stop()
