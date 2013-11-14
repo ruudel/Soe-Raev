@@ -5,7 +5,6 @@ import cv2.cv as cv
 import serial
 import time
 from time import sleep
-from halbkood import stop
 
 parem = serial.Serial('/dev/ttyACM2', timeout=1, parity=serial.PARITY_NONE, baudrate=115200)
 vasak = serial.Serial('/dev/ttyACM1', timeout=1, parity=serial.PARITY_NONE, baudrate=115200)
@@ -133,42 +132,15 @@ def leiaTsenter(contours):
 def joonistaTsenter(center, image):
     cv2.circle(image, tuple(center), 20, cv.RGB(255,0,0),2)
 
-
-def get_line_between_ball(image, ball):
-        ballx = ball[0]
-        bally = ball[1]
-
-        m = (ballx - self.dribbler_point[0]) / (bally - self.dribbler_point[1])
-        points = []
-        for i in range(bally, int(self.dribbler_point[1])):
-            x = int(m * (i - self.dribbler_point[1]) + self.dribbler_point[0])
-            points.append(image[i][x])
-        if (points):
-            counter = 0
-            temp_counter = 0
-            previous_i = points[0]
-            for i in points:
-                if (i and previous_i):
-                    temp_counter += 1
-                if (temp_counter > counter):
-                    counter = temp_counter
-                previous_i = i
-
-            return True if counter > self.LINE_SIZE else False
-        else:
-            return False
-
-
-aegStart=time.time()
-def soidaKuhugiKuiVaja():
-    if time.time()-aegStart>8:
-        stop()
-        vasak.write("sd25\n")
-        sleep(1)
-        stop()
-        soidaedasi(kiirus)
-        stop()
-        aegStart=time.time()
+def kasJoon(center):
+    x = center[0]
+    y = center[1]
+    
+    while y < 238:
+        y+=1
+        if dilatejoon[y, x]==255:
+            return True
+    return False
     
 c = cv2.VideoCapture(0)
 
@@ -184,13 +156,14 @@ sinine_max =  [115,198,145]
 kollane_min = [26,138,147]
 kollane_max = [34,160,183]
 
-must_min = [52, 37, 73]
-must_max = [79, 51, 95]
+must_min = [22, 53, 67]
+must_max = [48, 94, 103]
 
 tume = pall_min
 hele = pall_max
 
 kernel = np.ones((5,5), "uint8")    #dilate jaoks
+dilatekernel = np.ones((8,8), "uint8")    #dilate jaoks
 
 kiirus = 40
 
@@ -218,7 +191,7 @@ while(1):
 
     jooned = cv2.inRange(hsv, np.array(must_min), np.array(must_max))
 
-    dilatejoon = cv2.dilate(jooned, kernel)
+    dilatejoon = cv2.dilate(jooned, dilatekernel)
 
     dilate = cv2.dilate(thresh, kernel)
 
@@ -230,40 +203,45 @@ while(1):
 
     center = leiaTsenter(contours)
 
+    #kui on joon ees, siis kohe ots ringi
+    if dilatejoon[230,160] == 255:
+        ymberpoord()
+
     #Liikumise loogeka
     if center != None:
-        joonistaTsenter(center, kontuurimaagia)
-        joonemomendid = cv2.moments(dilatejoon)
 
-        if joonemomendid['m01'] < center[1]:
-            continue
-        
-        if center[0] > 180:
-            if kasPall():
-                vasak.write('sd-25')
+        if kasJoon(center) == False:
+            joonistaTsenter(center, kontuurimaagia)
+            joonemomendid = cv2.moments(dilatejoon)
+
+            if joonemomendid['m01'] < center[1]:
+                continue
+            
+            if center[0] > 180:
+                if kasPall():
+                    vasak.write('sd-25')
+                else:
+                    soidaparemale(kiirus)
+            elif center[0] < 140:
+                if kasPall():
+                    vasak.write('sd25')
+                else:
+                    soidavasakule(kiirus)
             else:
-                soidaparemale(kiirus)
-        elif center[0] < 140:
-            if kasPall():
-                vasak.write('sd25')
-            else:
-                soidavasakule(kiirus)
+                if kasPall():
+                        stop()
+                        annatuld(32000)
+                else:
+                    soidaedasi(kiirus)
         else:
-            if kasPall():
-                    stop()
-                    annatuld(32000)
-            else:
-                soidaedasi(kiirus)
+            soidaedasi(kiirus)
     else:
-##        try:
-##            joonistaTsenter(center, kontuurimaagia)
-##        except:
         soidaedasi(kiirus)
         
     
 ##    print("FPS: " + str(int(1/(time.time()-start))))
-##    cv2.imshow("Susivisoon", kontuurimaagia)
-##    cv2.imshow("Joonevisioon", dilatejoon)
+    cv2.imshow("Susivisoon", kontuurimaagia)
+    cv2.imshow("Joonevisioon", dilatejoon)
 
 ##    cv2.imshow("Reaalvisoon", f)
         
