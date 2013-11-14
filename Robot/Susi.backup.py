@@ -5,6 +5,7 @@ import cv2.cv as cv
 import serial
 import time
 from time import sleep
+from halbkood import stop
 
 parem = serial.Serial('/dev/ttyACM2', timeout=1, parity=serial.PARITY_NONE, baudrate=115200)
 vasak = serial.Serial('/dev/ttyACM1', timeout=1, parity=serial.PARITY_NONE, baudrate=115200)
@@ -132,6 +133,43 @@ def leiaTsenter(contours):
 def joonistaTsenter(center, image):
     cv2.circle(image, tuple(center), 20, cv.RGB(255,0,0),2)
 
+
+def get_line_between_ball(image, ball):
+        ballx = ball[0]
+        bally = ball[1]
+
+        m = (ballx - self.dribbler_point[0]) / (bally - self.dribbler_point[1])
+        points = []
+        for i in range(bally, int(self.dribbler_point[1])):
+            x = int(m * (i - self.dribbler_point[1]) + self.dribbler_point[0])
+            points.append(image[i][x])
+        if (points):
+            counter = 0
+            temp_counter = 0
+            previous_i = points[0]
+            for i in points:
+                if (i and previous_i):
+                    temp_counter += 1
+                if (temp_counter > counter):
+                    counter = temp_counter
+                previous_i = i
+
+            return True if counter > self.LINE_SIZE else False
+        else:
+            return False
+
+
+aegStart=time.time()
+def soidaKuhugiKuiVaja():
+    if time.time()-aegStart>8:
+        stop()
+        vasak.write("sd25\n")
+        sleep(1)
+        stop()
+        soidaedasi(kiirus)
+        stop()
+        aegStart=time.time()
+    
 c = cv2.VideoCapture(0)
 
 c.set(3, 320)   #Pildi korgus
@@ -221,6 +259,7 @@ while(1):
 ##            joonistaTsenter(center, kontuurimaagia)
 ##        except:
         soidaedasi(kiirus)
+        
     
 ##    print("FPS: " + str(int(1/(time.time()-start))))
 ##    cv2.imshow("Susivisoon", kontuurimaagia)
