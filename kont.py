@@ -6,9 +6,9 @@ import serial
 import time
 from time import sleep
 
-parem = serial.Serial('/dev/ttyACM2')
-vasak = serial.Serial('/dev/ttyACM1')
-coil = serial.Serial('/dev/ttyACM0')
+parem = serial.Serial('/dev/ttyACM5')
+vasak = serial.Serial('/dev/ttyACM4')
+coil = serial.Serial('/dev/ttyACM3')
 
 def saada(seade, sonum):
     seade.write(sonum+'\n')
@@ -108,7 +108,7 @@ def leiaTsenter(contours):
 def joonistaTsenter(center, image):
     cv2.circle(image, tuple(center), 20, cv.RGB(255,0,0),2)
 
-c = cv2.VideoCapture(0)
+c = cv2.VideoCapture(1)
 
 c.set(3, 320)   #Pildi korgus
 c.set(4, 240)   #Laius
@@ -180,7 +180,11 @@ while(1):
         else:
             if kasPall():
                 stop()
-                annatuld(10000)
+                saada(coil, 'c')
+                time.sleep(0.1)
+                annatuld(32000)
+            else:
+                soidaedasi(kiirus)
     else:
         stop()
     

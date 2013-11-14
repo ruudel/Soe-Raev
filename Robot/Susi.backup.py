@@ -6,9 +6,9 @@ import serial
 import time
 from time import sleep
 
-parem = serial.Serial('/dev/ttyACM2')
-vasak = serial.Serial('/dev/ttyACM1')
-coil = serial.Serial('/dev/ttyACM0')
+parem = serial.Serial('/dev/ttyACM2', timeout=1, parity=serial.PARITY_NONE, baudrate=115200)
+vasak = serial.Serial('/dev/ttyACM1', timeout=1, parity=serial.PARITY_NONE, baudrate=115200)
+coil = serial.Serial('/dev/ttyACM0', timeout=1, parity=serial.PARITY_NONE, baudrate=115200)
 
 def saada(seade, sonum):
     seade.write(sonum+'\n')
@@ -29,7 +29,7 @@ def tagane(kiirus):
     saada(parem,'sd'+str(kiirus))
 
 def ymberpoord():
-    saadaseadmetele('sd20\n')
+    saadaseadmetele('sd20')
     sleep(0.7)
     saadaseadmetele('sd0')
 
@@ -46,20 +46,24 @@ def loeseadmest(seade, sonum):
     print(seade.readline())
     
 def kasSin():
-    parem.write('go\n')
-    v=parem.readline()
-    if '<0mine>\n' in v:
-        return True
-    else:
-        return False
+    for i in range(3):
+        parem.write('go\n')
+        v=parem.readline()
+        if '<0mine>' in v:
+            return True
+        else:
+            return False
+    return False
 
 def kasKol():
-    parem.write('go\n')
-    v=parem.readline()
-    if '<1mine>\n' in v:
-        return True
-    else:
-        return False
+    for i in range(3):
+        parem.write('go\n')
+        v=parem.readline()
+        if '<1mine>' in v:
+            return True
+        else:
+            return False
+    return False
 
 def kasB():
     parem.write('gl\n')
@@ -69,24 +73,43 @@ def kasB():
     else:
         return False
 
-def kasPall(tase=0):
-    if tase==2:
-        return False
-    parem.write('gb\n')
-    v=parem.readline()
-    if '<b:1>' in v:
-        return True
-    elif '<b:0>' in v:
-        return False
-    else:
-        return kasPall(tase+1)
-
+def kasPall():
+    for i in range(3):
+        parem.write('gb\n')
+        v=parem.readline()
+        if '<b:1>' in v:
+            return True
+        elif '<b:0>' in v:
+            return False
+        else:
+            pass
+    return False
+        
 def annatuld(tugevus):
     saada(coil,'k'+str(tugevus))
+    
+def otsi():
+    joonemomendid = cv2.moments(dilatejoon)
+    
+    #kui must joon ees on, siis edasi ei soida
+    if joonemomendid['m01'] < 180:
+        stop()
+        ymberpoord()
+        
+        if joonemomendid['m01'] < 160:
+            soidavasakule(kiirus)
+        elif joonemomendid['m01'] >= 160:
+            soidaparemale(kiirus)
+    
+    else:
+        soidaedasi(kiirus)
 
 def leiaTsenter(contours):
     x=0
     y=0
+
+    maxArea = 0
+    
     for contour in contours:
         moments = cv2.moments(contour, True)
 
@@ -95,6 +118,7 @@ def leiaTsenter(contours):
             continue
 
         if moments['m00'] > maxArea:
+            maxArea = moments['m00']
             x=moments['m10']/moments['m00']
             y=moments['m01']/moments['m00']
 
@@ -113,26 +137,24 @@ c = cv2.VideoCapture(0)
 c.set(3, 320)   #Pildi korgus
 c.set(4, 240)   #Laius
 
-pall_min = [2,183,92]
-pall_max = [16,255,229]
+pall_min = [0,170,112]
+pall_max = [20,255,255]
 
-sinine_min = [83,148,72]
-sinine_max =  [124,213,172]
+sinine_min = [107,180,54]
+sinine_max =  [115,198,145]
 
-kollane_min = [20,148,132]
-kollane_max = [29,255,218]
+kollane_min = [26,138,147]
+kollane_max = [34,160,183]
 
-must_min = [61, 26, 0]
-must_max = [91, 67, 92]
+must_min = [52, 37, 73]
+must_max = [79, 51, 95]
 
 tume = pall_min
 hele = pall_max
 
 kernel = np.ones((5,5), "uint8")    #dilate jaoks
 
-maxArea = 0
-
-kiirus = 20
+kiirus = 40
 
 while(1):
 
@@ -166,26 +188,45 @@ while(1):
 
     contours, hierarchy = cv2.findContours(dilate, cv.CV_RETR_EXTERNAL, cv.CV_CHAIN_APPROX_NONE)
 
-    cv2.drawContours(kontuurimaagia, contours, -1, cv2.cv.RGB(0,255,0),2)
+    cv2.drawContours(kontuurimaagia, contours, -1, cv2.cv.RGB(0,255,0),-1)
 
     center = leiaTsenter(contours)
 
+    #Liikumise loogeka
     if center != None:
         joonistaTsenter(center, kontuurimaagia)
+        joonemomendid = cv2.moments(dilatejoon)
 
+        if joonemomendid['m01'] < center[1]:
+            continue
+        
         if center[0] > 180:
-            soidaparemale(kiirus)
+            if kasPall():
+                vasak.write('sd-25')
+            else:
+                soidaparemale(kiirus)
         elif center[0] < 140:
-            soidavasakule(kiirus)
+            if kasPall():
+                vasak.write('sd25')
+            else:
+                soidavasakule(kiirus)
         else:
             if kasPall():
-                stop()
-                annatuld(10000)
+                    stop()
+                    annatuld(32000)
+            else:
+                soidaedasi(kiirus)
     else:
-        stop()
+##        try:
+##            joonistaTsenter(center, kontuurimaagia)
+##        except:
+        soidaedasi(kiirus)
     
 ##    print("FPS: " + str(int(1/(time.time()-start))))
-    cv2.imshow("Susivisoon", kontuurimaagia)
+##    cv2.imshow("Susivisoon", kontuurimaagia)
+##    cv2.imshow("Joonevisioon", dilatejoon)
+
+##    cv2.imshow("Reaalvisoon", f)
         
     if cv2.waitKey(2) >= 0:
         stop()

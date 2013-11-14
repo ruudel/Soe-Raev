@@ -83,6 +83,22 @@ def kasPall(tase=0):
 
 def annatuld(tugevus):
     saada(coil,'k'+str(tugevus))
+    
+def otsi():
+    joonemomendid = cv2.moments(dilatejoon)
+    
+    #kui must joon ees on, siis edasi ei soida
+    if joonemomendid['m01'] < 180:
+        stop()
+        ymberpoord()
+        
+        if joonemomendid['m01'] < 160:
+            soidavasakule(kiirus)
+        elif joonemomendid['m01'] >= 160:
+            soidaparemale(kiirus)
+    
+    else:
+        soidaedasi(kiirus)
 
 def leiaTsenter(contours):
     x=0
@@ -108,7 +124,7 @@ def leiaTsenter(contours):
 def joonistaTsenter(center, image):
     cv2.circle(image, tuple(center), 20, cv.RGB(255,0,0),2)
 
-c = cv2.VideoCapture(0)
+c = cv2.VideoCapture(1)
 
 c.set(3, 320)   #Pildi korgus
 c.set(4, 240)   #Laius
@@ -132,7 +148,7 @@ kernel = np.ones((5,5), "uint8")    #dilate jaoks
 
 maxArea = 0
 
-kiirus = 20
+kiirus = 35
 
 while(1):
 
@@ -170,22 +186,38 @@ while(1):
 
     center = leiaTsenter(contours)
 
+    
+
+    #Liikumise loogeka
     if center != None:
         joonistaTsenter(center, kontuurimaagia)
+        joonemomendid = cv2.moments(dilatejoon)
 
         if center[0] > 180:
-            soidaparemale(kiirus)
+            if kasPall():
+                vasak.write('sd-15')
+            else:
+                soidaparemale(kiirus)
         elif center[0] < 140:
-            soidavasakule(kiirus)
+            if kasPall():
+                vasak.write('sd15')
+            else:
+                soidavasakule(kiirus)
         else:
             if kasPall():
-                stop()
-                annatuld(10000)
+                    stop()
+                    annatuld(32000)
     else:
-        stop()
+        if kasPall():
+            vasak.write('sd-15')
+        else:
+            vasak.write('sd15')
     
 ##    print("FPS: " + str(int(1/(time.time()-start))))
     cv2.imshow("Susivisoon", kontuurimaagia)
+##    cv2.imshow("Joonevisioon", dilatejoon)
+
+##    cv2.imshow("Reaalvisoon", f)
         
     if cv2.waitKey(2) >= 0:
         stop()

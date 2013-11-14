@@ -93,10 +93,9 @@ def leiaTsenter(contours):
         #kui moment 0, siis eira
         if (len(filter(lambda i: i==0, moments.values())) > 0):
             continue
-
-        if moments['m00'] > maxArea:
-            x=moments['m10']/moments['m00']
-            y=moments['m01']/moments['m00']
+        if moments['m00']/maxArea:
+            x=moments['m10']
+            y=mometns['m01']
 
             center=(x,y)
 
@@ -168,24 +167,22 @@ while(1):
 
     cv2.drawContours(kontuurimaagia, contours, -1, cv2.cv.RGB(0,255,0),2)
 
-    center = leiaTsenter(contours)
-
-    if center != None:
+    if center !=None:
         joonistaTsenter(center, kontuurimaagia)
-
-        if center[0] > 180:
-            soidaparemale(kiirus)
-        elif center[0] < 140:
-            soidavasakule(kiirus)
+    elif center[0] > 180:
+        soidaparemale(kiirus)
+    else:
+        if kasPall():
+            stop()
+            annatuld()
         else:
-            if kasPall():
-                stop()
-                annatuld(10000)
+            soidaedasi()
     else:
         stop()
     
 ##    print("FPS: " + str(int(1/(time.time()-start))))
     cv2.imshow("Susivisoon", kontuurimaagia)
+##    cv2.imshow("Jooned", dilatejoon)
         
     if cv2.waitKey(2) >= 0:
         stop()
